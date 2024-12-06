@@ -15,7 +15,7 @@ const predictImage = async (req, res) => {
     } catch (error) {
         res.status(400).json({
             status: "fails",
-            // message: error.message,
+            messages: error.message,
             message: "Terjadi kesalahan dalam melakukan prediksi",
         });
     }

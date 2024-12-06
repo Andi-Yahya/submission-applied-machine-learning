@@ -1,0 +1,49 @@
+name: Build and Deploy to Google Cloud
+
+on:
+    push:
+        branches:
+            - "main"
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            # Step 1: Check out the code
+            - name: Checkout Code
+              uses: actions/checkout@v2
+
+            # Step 2: Authenticate with Google Cloud
+            - name: Authenticate with Google Cloud
+              uses: google-github-actions/setup-gcloud@v0
+              with:
+                  project_id: ${{ secrets.GOOGLE_PROJECT }}
+                  service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+                  export_default_credentials: true
+                  install_components: "kubectl"
+
+            # Step 3: Build and Push Docker Image to Artifact Registry
+            - name: Build and Push Docker Image
+              env:
+                  GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
+              run: |
+                  # Configure Docker to use gcloud authentication
+                  gcloud auth configure-docker asia-southeast2-docker.pkg.dev
+
+                  # Build and Push Docker Image
+                  docker build -t asia-southeast2-docker.pkg.dev/$GOOGLE_PROJECT/my-docker-repo/nginx:latest .
+                  docker push asia-southeast2-docker.pkg.dev/$GOOGLE_PROJECT/my-docker-repo/nginx:latest
+
+            # Step 4: Deploy to GKE (Google Kubernetes Engine)
+            - name: Deploy to GKE
+              env:
+                  GOOGLE_PROJECT: ${{ secrets.GOOGLE_PROJECT }}
+              run: |
+                  # Get GKE cluster credentials
+                  gcloud container clusters get-credentials autopilot-cluster-1 --region asia-southeast2
+
+                  # Update resources.yaml with the correct project and image
+                  sed -i "s|IMAGE_PLACEHOLDER|asia-southeast2-docker.pkg.dev/$GOOGLE_PROJECT/my-docker-repo/nginx:latest|g" resources.yaml
+
+                  # Apply Kubernetes resources
+                  kubectl apply -f resources.yaml

@@ -16,7 +16,7 @@ const condition = async (result) => {
         };
         const result = await postUser(resBody.data);
         resBody.data.createdAt = new Date(resBody.data.createdAt._seconds * 1000).toLocaleString();
-        return resBody.data;
+        return resBody;
     } else {
         const resBody = {
             status: "success",
@@ -30,7 +30,7 @@ const condition = async (result) => {
         };
         const result = await postUser(resBody.data);
         resBody.data.createdAt = new Date(resBody.data.createdAt._seconds * 1000).toLocaleString();
-        return resBody.data;
+        return resBody;
     }
 };
 
